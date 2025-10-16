@@ -1,0 +1,15 @@
+{
+  "name": "discord-bot",
+  "version": "1.0.0",
+  "description": "Bot para encaminhar mensagens dos canais de baú para o sistema Projeto-Fac-GtaRp.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.5",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  }
+}
