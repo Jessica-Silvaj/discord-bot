@@ -40,7 +40,7 @@ if (!DISCORD_WEBHOOK_TOKEN) {
 }
 
 const canaisMonitorados = new Set(
-    [CANAL_ENTRADA_ID, CANAL_SAIDA_ID, CANAL_VENDAS_ID].filter((id) => typeof id === 'string' && id.trim() !== '')
+    Array.from(new Set([CANAL_ENTRADA_ID, CANAL_SAIDA_ID, CANAL_VENDAS_ID])).filter((id) => typeof id === 'string' && id.trim() !== '')
 );
 
 if (!canaisMonitorados.size) {
@@ -67,12 +67,10 @@ client.on('messageCreate', async (message) => {
         if (message.author?.bot) return;
         if (canaisMonitorados.size && !canaisMonitorados.has(message.channelId)) return;
 
-        const tipo =
-            message.channelId === CANAL_SAIDA_ID ? 'SAIDA' :
-                message.channelId === CANAL_ENTRADA_ID ? 'ENTRADA' :
-                    'DESCONHECIDO';
-
-        if (tipo === 'DESCONHECIDO') return;
+        let tipo = 'DESCONHECIDO';
+        if (message.channelId === CANAL_ENTRADA_ID) tipo = 'ENTRADA';
+        else if (message.channelId === CANAL_SAIDA_ID) tipo = 'SAIDA';
+        else if (message.channelId === CANAL_VENDAS_ID) tipo = 'VENDA';
 
         const anexos = [];
         message.attachments?.forEach((att) => {
