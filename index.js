@@ -1,25 +1,3 @@
-// Função para enviar mensagem via webhook do Discord
-let primeiraMensagemWebhook = true;
-async function enviarMensagemWebhook(mensagem) {
-    if (!DISCORD_WEBHOOK_SAIDAS) {
-        console.error('❌ DISCORD_WEBHOOK_SAIDAS não configurado.');
-        return;
-    }
-    try {
-        await axios.post(DISCORD_WEBHOOK_SAIDAS, {
-            content: mensagem
-        }, {
-            headers: { 'Content-Type': 'application/json' }
-        });
-        console.log('✅ Mensagem enviada via webhook!');
-        if (!primeiraMensagemWebhook) {
-            console.log('ℹ️ Mensagem extra: esta não é a primeira vez que envio via webhook.');
-        }
-        primeiraMensagemWebhook = false;
-    } catch (error) {
-        console.error('❌ Erro ao enviar via webhook:', error.response?.data ?? error.message);
-    }
-}
 import { Client, GatewayIntentBits } from 'discord.js';
 import axios from 'axios';
 import fs from 'fs';
@@ -87,12 +65,77 @@ client.once('clientReady', () => {
     enviarMensagemWebhook('🚀 Bot iniciado e webhook funcionando!');
 });
 
+// Função para enviar mensagem via webhook do Discord
+let primeiraMensagemWebhook = true;
+async function enviarMensagemWebhook(mensagem) {
+    if (!DISCORD_WEBHOOK_SAIDAS) {
+        console.error('❌ DISCORD_WEBHOOK_SAIDAS não configurado.');
+        return;
+    }
+    try {
+        await axios.post(DISCORD_WEBHOOK_SAIDAS, {
+            content: mensagem
+        }, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        console.log('✅ Mensagem enviada via webhook!');
+        if (!primeiraMensagemWebhook) {
+            console.log('ℹ️ Mensagem extra: esta não é a primeira vez que envio via webhook.');
+        }
+        primeiraMensagemWebhook = false;
+    } catch (error) {
+        console.error('❌ Erro ao enviar via webhook:', error.response?.data ?? error.message);
+    }
+}
+
 client.on('messageCreate', async (message) => {
     try {
         if (message.author?.bot) return;
         if (canaisMonitorados.size && !canaisMonitorados.has(message.channelId)) return;
 
-        // ...código original...
+        const tipo =
+            message.channelId === CANAL_SAIDA_ID ? 'SAIDA' :
+                message.channelId === CANAL_ENTRADA_ID ? 'ENTRADA' :
+                    'ENTRADA';
+
+        const anexos = [];
+        message.attachments?.forEach((att) => {
+            anexos.push({
+                id: att.id,
+                url: att.url,
+                proxy_url: att.proxyURL,
+                filename: att.name,
+                size: att.size,
+                content_type: att.contentType,
+            });
+        });
+
+        const itens = [];
+
+        const payload = {
+            token: DISCORD_WEBHOOK_TOKEN,
+            tipo,
+            message_id: message.id,
+            channel_id: message.channelId,
+            guild_id: message.guildId,
+            user_id: message.author?.id,
+            username: message.author?.username,
+            display_name: message.member?.displayName ?? null,
+            content: message.content,
+            itens,
+            anexos,
+            timestamp: message.createdTimestamp,
+        };
+
+        await axios.post(DISCORD_API_URL, payload, {
+            headers: {
+                'X-Webhook-Token': DISCORD_WEBHOOK_TOKEN,
+                'Content-Type': 'application/json',
+            },
+            timeout: 10000,
+        });
+
+        console.log(`✅ Solicitação ${tipo} enviada (${message.id}).`);
 
         // Exemplo de uso: envia mensagem via webhook se o conteúdo for 'webhook'
         if (message.content === 'webhook') {
