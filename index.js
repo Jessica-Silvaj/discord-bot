@@ -70,7 +70,9 @@ client.on('messageCreate', async (message) => {
         const tipo =
             message.channelId === CANAL_SAIDA_ID ? 'SAIDA' :
                 message.channelId === CANAL_ENTRADA_ID ? 'ENTRADA' :
-                    'ENTRADA';
+                    'DESCONHECIDO';
+
+        if (tipo === 'DESCONHECIDO') return;
 
         const anexos = [];
         message.attachments?.forEach((att) => {
