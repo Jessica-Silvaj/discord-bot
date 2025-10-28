@@ -19,10 +19,9 @@ const {
     DISCORD_WEBHOOK_TOKEN,
     CANAL_ENTRADA_ID,
     CANAL_SAIDA_ID,
-    CANAL_MENSAGEM_APROVADA,
-    CANAL_MENSAGEM_REPROVADA,
+    // CANAL_MENSAGEM_APROVADA,
+    // CANAL_MENSAGEM_REPROVADA,
     CANAL_VENDAS_ID,
-    DISCORD_WEBHOOK_SAIDAS,
 } = process.env;
 
 if (!DISCORD_BOT_TOKEN) {
@@ -41,7 +40,7 @@ if (!DISCORD_WEBHOOK_TOKEN) {
 }
 
 const canaisMonitorados = new Set(
-    [CANAL_ENTRADA_ID, CANAL_SAIDA_ID, CANAL_MENSAGEM_APROVADA, CANAL_MENSAGEM_REPROVADA, CANAL_VENDAS_ID, DISCORD_WEBHOOK_SAIDAS].filter((id) => typeof id === 'string' && id.trim() !== '')
+    [CANAL_ENTRADA_ID, CANAL_SAIDA_ID, CANAL_VENDAS_ID].filter((id) => typeof id === 'string' && id.trim() !== '')
 );
 
 if (!canaisMonitorados.size) {
@@ -61,32 +60,7 @@ client.once('clientReady', () => {
     if (canaisMonitorados.size) {
         console.log(`👀 Monitorando ${canaisMonitorados.size} canal(is): ${Array.from(canaisMonitorados).join(', ')}`);
     }
-    // Envia mensagem de teste via webhook ao iniciar o bot
-    enviarMensagemWebhook('🚀 Bot iniciado e webhook funcionando!');
 });
-
-// Função para enviar mensagem via webhook do Discord
-let primeiraMensagemWebhook = true;
-async function enviarMensagemWebhook(mensagem) {
-    if (!DISCORD_WEBHOOK_SAIDAS) {
-        console.error('❌ DISCORD_WEBHOOK_SAIDAS não configurado.');
-        return;
-    }
-    try {
-        await axios.post(DISCORD_WEBHOOK_SAIDAS, {
-            content: mensagem
-        }, {
-            headers: { 'Content-Type': 'application/json' }
-        });
-        console.log('✅ Mensagem enviada via webhook!');
-        if (!primeiraMensagemWebhook) {
-            console.log('ℹ️ Mensagem extra: esta não é a primeira vez que envio via webhook.');
-        }
-        primeiraMensagemWebhook = false;
-    } catch (error) {
-        console.error('❌ Erro ao enviar via webhook:', error.response?.data ?? error.message);
-    }
-}
 
 client.on('messageCreate', async (message) => {
     try {
@@ -127,26 +101,15 @@ client.on('messageCreate', async (message) => {
             timestamp: message.createdTimestamp,
         };
 
-        let respostaSistema;
-        try {
-            respostaSistema = await axios.post(DISCORD_API_URL, payload, {
-                headers: {
-                    'X-Webhook-Token': DISCORD_WEBHOOK_TOKEN,
-                    'Content-Type': 'application/json',
-                },
-                timeout: 10000,
-            });
-            console.log(`✅ Solicitação ${tipo} enviada (${message.id}) e registrada no sistema!`);
-            await enviarMensagemWebhook(`Solicitação de venda registrada com sucesso no sistema!`);
-        } catch (err) {
-            console.error('❌ Erro ao registrar solicitação no sistema:', err.response?.data ?? err.message);
-            await enviarMensagemWebhook(`❌ Erro ao registrar solicitação de venda no sistema!`);
-        }
+        await axios.post(DISCORD_API_URL, payload, {
+            headers: {
+                'X-Webhook-Token': DISCORD_WEBHOOK_TOKEN,
+                'Content-Type': 'application/json',
+            },
+            timeout: 10000,
+        });
 
-        // Exemplo de uso: envia mensagem via webhook se o conteúdo for 'webhook'
-        if (message.content === 'webhook') {
-            await enviarMensagemWebhook('Mensagem enviada pelo webhook do bot em produção!');
-        }
+        console.log(`✅ Solicitação ${tipo} enviada (${message.id}).`);
     } catch (error) {
         const data = error.response?.data;
         console.error('❌ Erro ao enviar solicitação:', data ?? error.message);
