@@ -94,9 +94,10 @@ client.on('messageCreate', async (message) => {
         if (canaisMonitorados.size && !canaisMonitorados.has(message.channelId)) return;
 
         const tipo =
-            message.channelId === CANAL_SAIDA_ID ? 'SAIDA' :
-                message.channelId === CANAL_ENTRADA_ID ? 'ENTRADA' :
-                    'ENTRADA';
+            message.channelId === DISCORD_WEBHOOK_SAIDAS ? 'VENDA' :
+                message.channelId === CANAL_SAIDA_ID ? 'SAIDA' :
+                    message.channelId === CANAL_ENTRADA_ID ? 'ENTRADA' :
+                        'ENTRADA';
 
         const anexos = [];
         message.attachments?.forEach((att) => {
@@ -127,15 +128,25 @@ client.on('messageCreate', async (message) => {
             timestamp: message.createdTimestamp,
         };
 
-        await axios.post(DISCORD_API_URL, payload, {
-            headers: {
-                'X-Webhook-Token': DISCORD_WEBHOOK_TOKEN,
-                'Content-Type': 'application/json',
-            },
-            timeout: 10000,
-        });
-
-        console.log(`✅ Solicitação ${tipo} enviada (${message.id}).`);
+        let respostaSistema;
+        try {
+            respostaSistema = await axios.post(DISCORD_API_URL, payload, {
+                headers: {
+                    'X-Webhook-Token': DISCORD_WEBHOOK_TOKEN,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 10000,
+            });
+            console.log(`✅ Solicitação ${tipo} enviada (${message.id}) e registrada no sistema!`);
+            if (tipo === 'VENDA') {
+                await enviarMensagemWebhook(`Solicitação de venda registrada com sucesso no sistema!`);
+            }
+        } catch (err) {
+            console.error('❌ Erro ao registrar solicitação no sistema:', err.response?.data ?? err.message);
+            if (tipo === 'VENDA') {
+                await enviarMensagemWebhook(`❌ Erro ao registrar solicitação de venda no sistema!`);
+            }
+        }
 
         // Exemplo de uso: envia mensagem via webhook se o conteúdo for 'webhook'
         if (message.content === 'webhook') {
