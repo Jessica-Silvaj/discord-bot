@@ -22,6 +22,7 @@ const {
     CANAL_MENSAGEM_APROVADA,
     CANAL_MENSAGEM_REPROVADA,
     CANAL_VENDAS_ID,
+    DISCORD_WEBHOOK_SAIDAS,
 } = process.env;
 
 if (!DISCORD_BOT_TOKEN) {
@@ -40,7 +41,7 @@ if (!DISCORD_WEBHOOK_TOKEN) {
 }
 
 const canaisMonitorados = new Set(
-    [CANAL_ENTRADA_ID, CANAL_SAIDA_ID, CANAL_MENSAGEM_APROVADA, CANAL_MENSAGEM_REPROVADA, CANAL_VENDAS_ID].filter((id) => typeof id === 'string' && id.trim() !== '')
+    [CANAL_ENTRADA_ID, CANAL_SAIDA_ID, CANAL_MENSAGEM_APROVADA, CANAL_MENSAGEM_REPROVADA, CANAL_VENDAS_ID, DISCORD_WEBHOOK_SAIDAS].filter((id) => typeof id === 'string' && id.trim() !== '')
 );
 
 if (!canaisMonitorados.size) {
